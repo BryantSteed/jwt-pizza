@@ -5,7 +5,7 @@ on:
 
 jobs:
   greeter:
-    rumos-om: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - run: echo hello
       - run: echo goodbye
