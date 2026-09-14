@@ -1,0 +1,11 @@
+name: basic-ci
+
+on:
+  workflow_dispatch
+
+jobs:
+  greeter:
+    rumos-om: ubuntu-latest
+    steps:
+      - run: echo hello
+      - run: echo goodbye
