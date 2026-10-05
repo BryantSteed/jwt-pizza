@@ -1,6 +1,6 @@
 import { Page } from '@playwright/test';
 import { expect } from './testSetup';
-import { Franchise, Role, User } from '../src/service/pizzaService';
+import { Franchise, Order, Role, User } from '../src/service/pizzaService';
 
 export async function basicInit(page: Page) {
   let loggedInUser: User | undefined;
@@ -8,6 +8,20 @@ export async function basicInit(page: Page) {
     'd@jwt.com': { id: '3', name: 'Kai Chen', email: 'd@jwt.com', password: 'a', roles: [{ role: Role.Diner }] },
     'f@jwt.com': { id: '4', name: 'Pizza Franchisee', email: 'f@jwt.com', password: 'f', roles: [{ role: Role.Franchisee, objectId: '9' }] },
     'a@jwt.com': { id: '1', name: 'Pizza Admin', email: 'a@jwt.com', password: 'admin', roles: [{ role: Role.Admin }] },
+  };
+  const ordersByUser: Record<string, Order[]> = {
+    '3': [
+      {
+        id: '1',
+        franchiseId: '2',
+        storeId: '4',
+        date: '2024-06-05T05:14:40.000Z',
+        items: [
+          { menuId: '1', description: 'Veggie', price: 0.0038 },
+          { menuId: '2', description: 'Pepperoni', price: 0.0042 },
+        ],
+      },
+    ],
   };
   let franchises: Franchise[] = [
     {
@@ -141,16 +155,57 @@ export async function basicInit(page: Page) {
   });
 
   await page.route('*/**/api/order', async (route) => {
+    const userId = loggedInUser?.id ?? '';
+    if (route.request().method() === 'GET') {
+      const historyRes = { id: userId, dinerId: userId, orders: ordersByUser[userId] ?? [] };
+      await route.fulfill({ json: historyRes });
+      return;
+    }
     const orderReq = route.request().postDataJSON();
     const orderRes = {
-      order: { ...orderReq, id: 23 },
+      order: { ...orderReq, id: '23', date: '2024-06-06T12:00:00.000Z' },
       jwt: 'eyJpYXQ',
     };
+    ordersByUser[userId] = [...(ordersByUser[userId] ?? []), orderRes.order];
     expect(route.request().method()).toBe('POST');
     await route.fulfill({ json: orderRes });
   });
 
+  await page.route('*/**/api/order/verify', async (route) => {
+    const verifyReq = route.request().postDataJSON();
+    expect(route.request().method()).toBe('POST');
+    if (verifyReq.jwt !== 'eyJpYXQ') {
+      await route.fulfill({ status: 403, json: { message: 'invalid' } });
+      return;
+    }
+    const verifyRes = {
+      message: 'valid',
+      payload: { vendor: { id: 'jwt-headquarters', name: 'JWT Pizza Headquarters' }, diner: { id: '3', name: 'Kai Chen', email: 'd@jwt.com' } },
+    };
+    await route.fulfill({ json: verifyRes });
+  });
+
   await page.goto('/');
+}
+
+export async function openPayment(page: Page, pizzas: string[] = ['Veggie', 'Pepperoni']) {
+  await basicInit(page);
+  await login(page, 'd@jwt.com', 'a');
+  await page.getByRole('button', { name: 'Order now' }).click();
+  await page.getByRole('combobox').selectOption('4');
+  for (const pizza of pizzas) {
+    await page.getByRole('link', { name: new RegExp(pizza) }).click();
+  }
+  await page.getByRole('button', { name: 'Checkout' }).click();
+
+  await expect(page.getByRole('heading', { name: 'So worth it' })).toBeVisible();
+}
+
+export async function openDelivery(page: Page) {
+  await openPayment(page);
+  await page.getByRole('button', { name: 'Pay now' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Here is your JWT Pizza!' })).toBeVisible();
 }
 
 export async function login(page: Page, email: string, password: string) {
