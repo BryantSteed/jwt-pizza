@@ -34,6 +34,31 @@ export async function basicInit(page: Page) {
   ];
 
   await page.route('*/**/api/auth', async (route) => {
+    // logout request
+    if (route.request().method() === 'DELETE') {
+      loggedInUser = undefined;
+      await route.fulfill({ json: { message: 'logout successful' } });
+      return;
+    }
+    // register request
+    if (route.request().method() === 'POST') {
+      const registerReq = route.request().postDataJSON();
+      expect(registerReq).toEqual({ name: expect.any(String), email: expect.any(String), password: expect.any(String) });
+      if (validUsers[registerReq.email]) {
+        await route.fulfill({ status: 409, json: { message: 'User already exists' } });
+        return;
+      }
+      validUsers[registerReq.email] = { id: '20', ...registerReq, roles: [{ role: Role.Diner }] };
+      loggedInUser = validUsers[registerReq.email];
+      const registerRes = {
+        user: loggedInUser,
+        token: 'abcdef',
+      };
+      await route.fulfill({ json: registerRes });
+      return;
+    }
+    expect(route.request().method()).toBe('PUT');
+    // This would be a login request because its PUT
     const loginReq = route.request().postDataJSON();
     const user = validUsers[loginReq.email];
     if (!user || user.password !== loginReq.password) {
@@ -45,7 +70,6 @@ export async function basicInit(page: Page) {
       user: loggedInUser,
       token: 'abcdef',
     };
-    expect(route.request().method()).toBe('PUT');
     await route.fulfill({ json: loginRes });
   });
 
