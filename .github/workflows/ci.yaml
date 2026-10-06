@@ -20,10 +20,13 @@ jobs:
         with:
           node-version: '22.x'
 
-      - name: Run tests
+      - name: Install dependencies
         run: |
+          npm ci
           npx playwright install --with-deps chromium
-          npm run test:coverage
+
+      - name: Run tests
+        run: npm run test:coverage
 
       - name: Update coverage
         run: |
@@ -40,7 +43,7 @@ jobs:
 
       - name: Build
         run: |
-          npm ci && npm run build
+          npm run build
           cp dist/index.html dist/404.html
 
       - name: Update pages artifact
