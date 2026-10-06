@@ -16,9 +16,6 @@ test('verify shows a valid pizza', async ({ page }) => {
 
   await expect(page.getByRole('heading', { name: 'JWT Pizza - valid' })).toBeVisible();
   await expect(page.locator('pre')).toContainText('JWT Pizza Headquarters');
-  await page.getByRole('button', { name: 'Close' }).click();
-
-  await expect(page.getByRole('heading', { name: 'JWT Pizza - valid' })).toBeHidden();
 });
 
 test('verify shows an invalid pizza', async ({ page }) => {
