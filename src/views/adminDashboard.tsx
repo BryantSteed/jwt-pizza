@@ -23,11 +23,23 @@ function UserTable() {
   const [page, setPage] = React.useState(1);
   const [filter, setFilter] = React.useState('*');
 
+  async function loadUsers() {
+    setUserList(await pizzaService.getUsers(page, 10, filter));
+  }
+
   React.useEffect(() => {
-    (async () => {
-      setUserList(await pizzaService.getUsers(page, 10, filter));
-    })();
+    loadUsers();
   }, [page, filter]);
+
+  async function deleteUser(user: User) {
+    await pizzaService.deleteUser(user);
+    // deleting the only user on a later page would leave it empty, so step back instead
+    if (userList.users.length === 1 && page > 1) {
+      setPage(page - 1);
+    } else {
+      await loadUsers();
+    }
+  }
 
   function filterUsers(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -45,6 +57,7 @@ function UserTable() {
             <th className="px-2 text-start">Name</th>
             <th className="px-2 text-start">Email</th>
             <th className="px-2 text-start">Role</th>
+            <th className="px-2 text-end">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -53,6 +66,11 @@ function UserTable() {
               <td className="px-2">{user.name}</td>
               <td className="px-2">{user.email}</td>
               <td className="px-2">{roleNames(user)}</td>
+              <td className="px-2 text-end">
+                <button aria-label={`Delete ${user.name}`} className="px-2" onClick={() => deleteUser(user)}>
+                  X
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -66,7 +84,7 @@ function UserTable() {
                 </button>
               </form>
             </td>
-            <td className="px-2 text-end">
+            <td colSpan={2} className="px-2 text-end">
               <button aria-label="Previous users" className="px-2 disabled:text-gray-400" onClick={() => setPage(page - 1)} disabled={page <= 1}>
                 Prev
               </button>

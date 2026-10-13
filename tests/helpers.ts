@@ -118,15 +118,21 @@ export async function basicInit(page: Page) {
   });
 
   await page.route(/\/api\/user\/\d+$/, async (route) => {
-    // update user request
-    expect(route.request().method()).toBe('PUT');
     const userId = route.request().url().split('/').pop();
-    const updateReq = route.request().postDataJSON();
     const oldEmail = Object.keys(validUsers).find((email) => validUsers[email].id === userId);
     if (!oldEmail) {
       await route.fulfill({ status: 404, json: { message: 'unknown user' } });
       return;
     }
+    // delete user request
+    if (route.request().method() === 'DELETE') {
+      delete validUsers[oldEmail];
+      await route.fulfill({ json: { message: 'user deleted' } });
+      return;
+    }
+    // update user request
+    expect(route.request().method()).toBe('PUT');
+    const updateReq = route.request().postDataJSON();
     const user = validUsers[oldEmail];
     user.name = updateReq.name || user.name;
     user.email = updateReq.email || user.email;

@@ -130,6 +130,43 @@ test('filtering users goes back to the first page', async ({ page }) => {
   await expect(page.getByRole('row', { name: 'Diner 8' })).toHaveCount(0);
 });
 
+test('admin deletes a user', async ({ page }) => {
+  await openAdminDashboard(page);
+
+  await expect(page.getByRole('row', { name: 'Kai Chen' })).toBeVisible();
+  await expect(page.getByRole('row', { name: 'Diner 7' })).toHaveCount(0);
+  await page.getByRole('row', { name: 'Kai Chen' }).getByRole('button', { name: 'Delete' }).click();
+
+  await expect(page.getByRole('row', { name: 'Kai Chen' })).toHaveCount(0);
+  await expect(page.getByRole('row', { name: 'Pizza Admin' })).toBeVisible();
+  await expect(page.getByRole('row', { name: 'Diner 7' })).toBeVisible();
+});
+
+test('deleted user can no longer log in', async ({ page }) => {
+  await openAdminDashboard(page);
+  await page.getByRole('row', { name: 'Kai Chen' }).getByRole('button', { name: 'Delete' }).click();
+  await expect(page.getByRole('row', { name: 'Kai Chen' })).toHaveCount(0);
+
+  await page.getByRole('link', { name: 'Logout' }).click();
+  await login(page, 'd@jwt.com', 'a');
+
+  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'KC' })).toHaveCount(0);
+});
+
+test('deleting the last user on a page goes back a page', async ({ page }) => {
+  await openAdminDashboard(page);
+
+  await page.getByRole('button', { name: 'Next users' }).click();
+  await page.getByRole('row', { name: 'Diner 7' }).getByRole('button', { name: 'Delete' }).click();
+  await expect(page.getByRole('row', { name: 'Diner 7' })).toHaveCount(0);
+  await page.getByRole('row', { name: 'Diner 8' }).getByRole('button', { name: 'Delete' }).click();
+
+  await expect(page.getByRole('row', { name: 'Diner 8' })).toHaveCount(0);
+  await expect(page.getByRole('row', { name: 'Pizza Admin' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Next users' })).toBeDisabled();
+});
+
 test('admin dashboard is not found for a diner', async ({ page }) => {
   await basicInit(page);
   await login(page, 'd@jwt.com', 'a');
