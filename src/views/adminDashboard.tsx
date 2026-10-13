@@ -21,12 +21,20 @@ function UserTable() {
   const [userList, setUserList] = React.useState<UserList>({ users: [], more: false });
 
   const [page, setPage] = React.useState(1);
+  const [filter, setFilter] = React.useState('*');
 
   React.useEffect(() => {
     (async () => {
-      setUserList(await pizzaService.getUsers(page, 10, '*'));
+      setUserList(await pizzaService.getUsers(page, 10, filter));
     })();
-  }, [page]);
+  }, [page, filter]);
+
+  function filterUsers(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const name = new FormData(e.currentTarget).get('filterUsers') as string;
+    setFilter(name ? `*${name}*` : '*');
+    setPage(1);
+  }
 
   return (
     <div className="text-start px-8">
@@ -50,7 +58,15 @@ function UserTable() {
         </tbody>
         <tfoot>
           <tr>
-            <td colSpan={3} className="px-2 text-end">
+            <td colSpan={2} className="px-2">
+              <form onSubmit={filterUsers}>
+                <input type="text" name="filterUsers" placeholder="Filter users" className="border px-1" />
+                <button type="submit" className="px-2">
+                  Search
+                </button>
+              </form>
+            </td>
+            <td className="px-2 text-end">
               <button aria-label="Previous users" className="px-2 disabled:text-gray-400" onClick={() => setPage(page - 1)} disabled={page <= 1}>
                 Prev
               </button>

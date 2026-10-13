@@ -79,6 +79,57 @@ test('admin pages through users', async ({ page }) => {
   await expect(page.getByRole('row', { name: 'Diner 7' })).toHaveCount(0);
 });
 
+test('admin filters users by name', async ({ page }) => {
+  await openAdminDashboard(page);
+
+  await expect(page.getByRole('row', { name: 'Kai Chen' })).toBeVisible();
+  await page.getByPlaceholder('Filter users').fill('pizza');
+  await page.getByRole('button', { name: 'Search' }).click();
+
+  await expect(page.getByRole('row', { name: 'Pizza Admin' })).toBeVisible();
+  await expect(page.getByRole('row', { name: 'Pizza Franchisee' })).toBeVisible();
+  await expect(page.getByRole('row', { name: 'Kai Chen' })).toHaveCount(0);
+  await expect(page.getByRole('row', { name: 'Diner 1' })).toHaveCount(0);
+});
+
+test('clearing the user filter shows everyone again', async ({ page }) => {
+  await openAdminDashboard(page);
+
+  await page.getByPlaceholder('Filter users').fill('pizza');
+  await page.getByRole('button', { name: 'Search' }).click();
+  await expect(page.getByRole('row', { name: 'Kai Chen' })).toHaveCount(0);
+  await page.getByPlaceholder('Filter users').fill('');
+  await page.getByRole('button', { name: 'Search' }).click();
+
+  await expect(page.getByRole('row', { name: 'Kai Chen' })).toBeVisible();
+  await expect(page.getByRole('row', { name: 'Diner 1' })).toBeVisible();
+});
+
+test('user filter is kept while paging', async ({ page }) => {
+  await openAdminDashboard(page);
+
+  await expect(page.getByRole('row', { name: 'Pizza Admin' })).toBeVisible();
+  await page.getByPlaceholder('Filter users').fill('e');
+  await page.getByRole('button', { name: 'Search' }).click();
+  await expect(page.getByRole('row', { name: 'Pizza Admin' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Next users' }).click();
+
+  await expect(page.getByRole('row', { name: 'Diner 8' })).toBeVisible();
+  await expect(page.getByRole('row', { name: 'Diner 7' })).toHaveCount(0);
+});
+
+test('filtering users goes back to the first page', async ({ page }) => {
+  await openAdminDashboard(page);
+
+  await page.getByRole('button', { name: 'Next users' }).click();
+  await expect(page.getByRole('row', { name: 'Diner 8' })).toBeVisible();
+  await page.getByPlaceholder('Filter users').fill('Mia');
+  await page.getByRole('button', { name: 'Search' }).click();
+
+  await expect(page.getByRole('row', { name: 'Mia Lopez' })).toBeVisible();
+  await expect(page.getByRole('row', { name: 'Diner 8' })).toHaveCount(0);
+});
+
 test('admin dashboard is not found for a diner', async ({ page }) => {
   await basicInit(page);
   await login(page, 'd@jwt.com', 'a');
