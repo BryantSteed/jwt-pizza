@@ -109,3 +109,32 @@ test('user can log in with an updated email and password', async ({ page }) => {
   await expect(page.getByRole('main')).toContainText('Kai Chen');
   await expect(page.getByRole('main')).toContainText('kai@jwt.com');
 });
+
+test('franchisee keeps their franchise after updating their name', async ({ page }) => {
+  await basicInit(page);
+  await login(page, 'f@jwt.com', 'f');
+  await page.getByRole('link', { name: 'PF' }).click();
+  await page.getByRole('button', { name: 'Edit' }).click();
+  await page.getByRole('dialog').getByLabel('name:').fill('Olive Baker');
+  await page.getByRole('button', { name: 'Update' }).click();
+
+  await expect(page.getByRole('main')).toContainText('Olive Baker');
+  await expect(page.getByRole('main')).toContainText('Franchisee on 9');
+  await expect(page.getByRole('link', { name: 'OB' })).toBeVisible();
+});
+
+test('admin is still an admin after updating their name', async ({ page }) => {
+  await basicInit(page);
+  await login(page, 'a@jwt.com', 'admin');
+  await page.getByRole('link', { name: 'PA' }).click();
+  await page.getByRole('button', { name: 'Edit' }).click();
+  await page.getByRole('dialog').getByLabel('name:').fill('Head Chef');
+  await page.getByRole('button', { name: 'Update' }).click();
+  await expect(page.getByRole('main')).toContainText('Head Chef');
+  await expect(page.getByRole('main')).toContainText('admin');
+
+  await page.getByLabel('Global').getByRole('link', { name: 'Admin' }).click();
+
+  await expect(page.getByRole('heading', { name: "Mama Ricci's kitchen" })).toBeVisible();
+  await expect(page.getByRole('row', { name: 'Head Chef' })).toContainText('a@jwt.com');
+});
