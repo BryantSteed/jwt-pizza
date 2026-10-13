@@ -110,6 +110,27 @@ test('user can log in with an updated email and password', async ({ page }) => {
   await expect(page.getByRole('main')).toContainText('kai@jwt.com');
 });
 
+test('update requires a name and an email', async ({ page }) => {
+  await basicInit(page);
+  await login(page, 'd@jwt.com', 'a');
+  await page.getByRole('link', { name: 'KC' }).click();
+  await page.getByRole('button', { name: 'Edit' }).click();
+  const dialog = page.getByRole('dialog');
+
+  await dialog.getByLabel('email:').fill('');
+  await page.getByRole('button', { name: 'Update' }).click();
+  await expect(dialog.getByRole('heading', { name: 'Edit user' })).toBeVisible();
+
+  await dialog.getByLabel('email:').fill('d@jwt.com');
+  await dialog.getByLabel('name:').fill('');
+  await page.getByRole('button', { name: 'Update' }).click();
+  await expect(dialog.getByRole('heading', { name: 'Edit user' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Cancel' }).click();
+  await expect(page.getByRole('main')).toContainText('Kai Chen');
+  await expect(page.getByRole('main')).toContainText('d@jwt.com');
+});
+
 test('franchisee keeps their franchise after updating their name', async ({ page }) => {
   await basicInit(page);
   await login(page, 'f@jwt.com', 'f');

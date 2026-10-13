@@ -46,10 +46,10 @@ function EditUser(props: EditUserProps) {
       <h3 className="font-bold">Edit user</h3>
       <form onSubmit={submit}>
         <label className="block my-2">
-          name: <input name="name" type="text" className="border p-1" defaultValue={props.user.name} />
+          name: <input name="name" type="text" className="border p-1" defaultValue={props.user.name} required />
         </label>
         <label className="block my-2">
-          email: <input name="email" type="email" className="border p-1" defaultValue={props.user.email} />
+          email: <input name="email" type="email" className="border p-1" defaultValue={props.user.email} required />
         </label>
         <label className="block my-2">
           password: <input name="password" type="password" className="border p-1" />
