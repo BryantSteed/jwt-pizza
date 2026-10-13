@@ -20,11 +20,13 @@ function roleNames(user: User) {
 function UserTable() {
   const [userList, setUserList] = React.useState<UserList>({ users: [], more: false });
 
+  const [page, setPage] = React.useState(1);
+
   React.useEffect(() => {
     (async () => {
-      setUserList(await pizzaService.getUsers(1, 10, '*'));
+      setUserList(await pizzaService.getUsers(page, 10, '*'));
     })();
-  }, []);
+  }, [page]);
 
   return (
     <div className="text-start px-8">
@@ -46,6 +48,18 @@ function UserTable() {
             </tr>
           ))}
         </tbody>
+        <tfoot>
+          <tr>
+            <td colSpan={3} className="px-2 text-end">
+              <button aria-label="Previous users" className="px-2 disabled:text-gray-400" onClick={() => setPage(page - 1)} disabled={page <= 1}>
+                Prev
+              </button>
+              <button aria-label="Next users" className="px-2 disabled:text-gray-400" onClick={() => setPage(page + 1)} disabled={!userList.more}>
+                Next
+              </button>
+            </td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   );

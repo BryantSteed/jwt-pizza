@@ -16,6 +16,10 @@ export async function basicInit(page: Page) {
     'f@jwt.com': { id: '4', name: 'Pizza Franchisee', email: 'f@jwt.com', password: 'f', roles: [{ role: Role.Franchisee, objectId: '9' }] },
     'a@jwt.com': { id: '1', name: 'Pizza Admin', email: 'a@jwt.com', password: 'admin', roles: [{ role: Role.Admin }] },
   };
+  // enough extra users that the user list needs a second page
+  for (let i = 1; i <= 8; i++) {
+    validUsers[`diner${i}@jwt.com`] = { id: `${100 + i}`, name: `Diner ${i}`, email: `diner${i}@jwt.com`, password: 'diner', roles: [{ role: Role.Diner }] };
+  }
   const ordersByUser: Record<string, Order[]> = {
     '3': [
       {
