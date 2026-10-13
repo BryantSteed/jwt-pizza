@@ -91,3 +91,21 @@ test('updated name is still there after logging back in', async ({ page }) => {
 
   await expect(page.getByRole('main')).toContainText('Kai Chenx');
 });
+
+test('user can log in with an updated email and password', async ({ page }) => {
+  await basicInit(page);
+  await login(page, 'd@jwt.com', 'a');
+  await page.getByRole('link', { name: 'KC' }).click();
+  await page.getByRole('button', { name: 'Edit' }).click();
+  await page.getByRole('dialog').getByLabel('email:').fill('kai@jwt.com');
+  await page.getByRole('dialog').getByLabel('password:').fill('newpass');
+  await page.getByRole('button', { name: 'Update' }).click();
+  await expect(page.getByRole('main')).toContainText('kai@jwt.com');
+
+  await page.getByRole('link', { name: 'Logout' }).click();
+  await login(page, 'kai@jwt.com', 'newpass');
+  await page.getByRole('link', { name: 'KC' }).click();
+
+  await expect(page.getByRole('main')).toContainText('Kai Chen');
+  await expect(page.getByRole('main')).toContainText('kai@jwt.com');
+});
