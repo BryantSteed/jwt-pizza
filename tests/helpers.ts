@@ -5,6 +5,13 @@ import { Franchise, Order, Role, User } from '../src/service/pizzaService';
 export async function basicInit(page: Page) {
   let loggedInUser: User | undefined;
   const validUsers: Record<string, User> = {
+    'm@jwt.com': {
+      id: '2',
+      name: 'Mia Lopez',
+      email: 'm@jwt.com',
+      password: 'm',
+      roles: [{ role: Role.Diner }, { role: Role.Franchisee, objectId: '2' }, { role: Role.Franchisee, objectId: '3' }],
+    },
     'd@jwt.com': { id: '3', name: 'Kai Chen', email: 'd@jwt.com', password: 'a', roles: [{ role: Role.Diner }] },
     'f@jwt.com': { id: '4', name: 'Pizza Franchisee', email: 'f@jwt.com', password: 'f', roles: [{ role: Role.Franchisee, objectId: '9' }] },
     'a@jwt.com': { id: '1', name: 'Pizza Admin', email: 'a@jwt.com', password: 'admin', roles: [{ role: Role.Admin }] },
@@ -90,6 +97,20 @@ export async function basicInit(page: Page) {
   await page.route('*/**/api/user/me', async (route) => {
     expect(route.request().method()).toBe('GET');
     await route.fulfill({ json: loggedInUser });
+  });
+
+  await page.route(/\/api\/user(\?.*)?$/, async (route) => {
+    // list users request, pages start at 1
+    expect(route.request().method()).toBe('GET');
+    const params = new URL(route.request().url()).searchParams;
+    const limit = Number(params.get('limit') ?? 10);
+    const start = (Number(params.get('page') ?? 1) - 1) * limit;
+    const nameFilter = (params.get('name') ?? '*').replace(/\*/g, '').toLowerCase();
+    const matching = Object.values(validUsers)
+      .filter((u) => u.name!.toLowerCase().includes(nameFilter))
+      .sort((a, b) => Number(a.id) - Number(b.id));
+    const users = matching.slice(start, start + limit).map((u) => ({ id: u.id, name: u.name, email: u.email, roles: u.roles }));
+    await route.fulfill({ json: { users, more: matching.length > start + limit } });
   });
 
   await page.route(/\/api\/user\/\d+$/, async (route) => {

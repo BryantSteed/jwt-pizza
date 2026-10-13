@@ -41,6 +41,25 @@ test('admin filters franchises', async ({ page }) => {
   await expect(page.getByRole('row', { name: /topSpot/ })).toHaveCount(0);
 });
 
+test('admin sees users', async ({ page }) => {
+  await openAdminDashboard(page);
+
+  await expect(page.getByRole('heading', { name: 'Users' })).toBeVisible();
+  await expect(page.getByRole('row', { name: /Kai Chen/ })).toContainText('d@jwt.com');
+  await expect(page.getByRole('row', { name: /Kai Chen/ })).toContainText('diner');
+  await expect(page.getByRole('row', { name: /Pizza Franchisee/ })).toContainText('f@jwt.com');
+  await expect(page.getByRole('row', { name: /Pizza Franchisee/ })).toContainText('franchisee');
+  await expect(page.getByRole('row', { name: /Pizza Admin/ })).toContainText('a@jwt.com');
+  await expect(page.getByRole('row', { name: /Pizza Admin/ })).toContainText('admin');
+});
+
+test('user with several roles shows each role once', async ({ page }) => {
+  await openAdminDashboard(page);
+
+  await expect(page.getByRole('row', { name: 'Mia Lopez' })).toContainText('diner, franchisee');
+  await expect(page.getByRole('row', { name: 'Mia Lopez' })).not.toContainText('franchisee, franchisee');
+});
+
 test('admin dashboard is not found for a diner', async ({ page }) => {
   await basicInit(page);
   await login(page, 'd@jwt.com', 'a');

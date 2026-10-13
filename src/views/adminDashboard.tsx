@@ -4,11 +4,51 @@ import { useNavigate } from 'react-router-dom';
 import NotFound from './notFound';
 import Button from '../components/button';
 import { pizzaService } from '../service/service';
-import { Franchise, FranchiseList, Role, Store, User } from '../service/pizzaService';
+import { Franchise, FranchiseList, Role, Store, User, UserList } from '../service/pizzaService';
 import { TrashIcon } from '../icons';
 
 interface Props {
   user: User | null;
+}
+
+// a user has one franchisee role per franchise, so only list each role name once
+function roleNames(user: User) {
+  const names = (user.roles || []).map((r) => r.role);
+  return names.filter((name, index) => names.indexOf(name) === index).join(', ');
+}
+
+function UserTable() {
+  const [userList, setUserList] = React.useState<UserList>({ users: [], more: false });
+
+  React.useEffect(() => {
+    (async () => {
+      setUserList(await pizzaService.getUsers(1, 10, '*'));
+    })();
+  }, []);
+
+  return (
+    <div className="text-start px-8">
+      <h3 className="text-neutral-100 text-xl">Users</h3>
+      <table className="w-full my-4 bg-neutral-100 text-sm">
+        <thead>
+          <tr>
+            <th className="px-2 text-start">Name</th>
+            <th className="px-2 text-start">Email</th>
+            <th className="px-2 text-start">Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          {userList.users.map((user) => (
+            <tr key={user.id}>
+              <td className="px-2">{user.name}</td>
+              <td className="px-2">{user.email}</td>
+              <td className="px-2">{roleNames(user)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 export default function AdminDashboard(props: Props) {
@@ -123,6 +163,7 @@ export default function AdminDashboard(props: Props) {
         <div>
           <Button className="w-36 text-xs sm:text-sm sm:w-64" title="Add Franchise" onPress={createFranchise} />
         </div>
+        <UserTable />
       </View>
     );
   }
