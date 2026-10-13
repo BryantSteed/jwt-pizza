@@ -75,3 +75,19 @@ test('update changes the user name', async ({ page }) => {
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByRole('main')).toContainText('Kai Chenx');
 });
+
+test('updated name is still there after logging back in', async ({ page }) => {
+  await basicInit(page);
+  await login(page, 'd@jwt.com', 'a');
+  await page.getByRole('link', { name: 'KC' }).click();
+  await page.getByRole('button', { name: 'Edit' }).click();
+  await page.getByRole('dialog').getByLabel('name:').fill('Kai Chenx');
+  await page.getByRole('button', { name: 'Update' }).click();
+  await expect(page.getByRole('main')).toContainText('Kai Chenx');
+
+  await page.getByRole('link', { name: 'Logout' }).click();
+  await login(page, 'd@jwt.com', 'a');
+  await page.getByRole('link', { name: 'KC' }).click();
+
+  await expect(page.getByRole('main')).toContainText('Kai Chenx');
+});

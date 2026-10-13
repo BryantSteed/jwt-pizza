@@ -7,10 +7,18 @@ import Button from '../components/button';
 
 interface Props {
   user: User | null;
+  setUser: (user: User) => void;
+}
+
+interface UserFields {
+  name: string;
+  email: string;
+  password: string;
 }
 
 interface EditUserProps {
   user: User;
+  onUpdateFormSubmit: (fields: UserFields) => void;
   onClose: () => void;
 }
 
@@ -23,20 +31,32 @@ function EditUser(props: EditUserProps) {
     }
   }, []);
 
+  function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    props.onUpdateFormSubmit({
+      name: data.get('name') as string,
+      email: data.get('email') as string,
+      password: data.get('password') as string,
+    });
+  }
+
   return (
     <dialog ref={dialogRef} onClose={props.onClose} className="p-4 rounded-lg backdrop:bg-black/50">
       <h3 className="font-bold">Edit user</h3>
-      <label className="block my-2">
-        name: <input type="text" className="border p-1" defaultValue={props.user.name} />
-      </label>
-      <label className="block my-2">
-        email: <input type="email" className="border p-1" defaultValue={props.user.email} />
-      </label>
-      <label className="block my-2">
-        password: <input type="password" className="border p-1" />
-      </label>
-      <Button title="Update" onPress={props.onClose} />
-      <Button title="Cancel" className="bg-gray-500" onPress={props.onClose} />
+      <form onSubmit={submit}>
+        <label className="block my-2">
+          name: <input name="name" type="text" className="border p-1" defaultValue={props.user.name} />
+        </label>
+        <label className="block my-2">
+          email: <input name="email" type="email" className="border p-1" defaultValue={props.user.email} />
+        </label>
+        <label className="block my-2">
+          password: <input name="password" type="password" className="border p-1" />
+        </label>
+        <Button title="Update" submit onPress={() => {}} />
+        <Button title="Cancel" className="bg-gray-500" onPress={props.onClose} />
+      </form>
     </dialog>
   );
 }
@@ -63,6 +83,12 @@ export default function DinerDashboard(props: Props) {
     return role.role;
   }
 
+  async function updateUser(fields: UserFields) {
+    const updatedUser = await pizzaService.updateUser({ ...user, name: fields.name, email: fields.email, password: fields.password || undefined });
+    props.setUser(updatedUser);
+    setEditing(false);
+  }
+
   return (
     <View title="Your pizza kitchen">
       <div className="text-start py-8 px-4 sm:px-6 lg:px-8">
@@ -70,7 +96,7 @@ export default function DinerDashboard(props: Props) {
           <img className="hs-tooltip-toggle relative inline-block size-[96px] rounded-full ring-2 ring-white hover:z-10" src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=facearea&facepad=2&w=300&h=300&q=80" alt="Employee stock photo" />
         </div>
         <Button title="Edit" className="block ml-0" onPress={() => setEditing(true)} />
-        {editing && <EditUser user={user} onClose={() => setEditing(false)} />}
+        {editing && <EditUser user={user} onUpdateFormSubmit={updateUser} onClose={() => setEditing(false)} />}
 
         <div className="my-4 text-lg text-orange-200 text-start grid grid-cols-5 gap-2">
           <div className="font-semibold text-orange-400">name:</div> <div className="col-span-4">{user.name}</div>
