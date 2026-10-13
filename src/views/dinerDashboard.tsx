@@ -3,14 +3,48 @@ import { Link } from 'react-router-dom';
 import View from './view';
 import { pizzaService } from '../service/service';
 import { Order, OrderHistory, Role, User } from '../service/pizzaService';
+import Button from '../components/button';
 
 interface Props {
   user: User | null;
 }
 
+interface EditUserProps {
+  user: User;
+  onClose: () => void;
+}
+
+function EditUser(props: EditUserProps) {
+  const dialogRef = React.useRef<HTMLDialogElement>(null);
+
+  React.useEffect(() => {
+    if (!dialogRef.current?.open) {
+      dialogRef.current?.showModal();
+    }
+  }, []);
+
+  return (
+    <dialog ref={dialogRef} onClose={props.onClose} className="p-4 rounded-lg backdrop:bg-black/50">
+      <h3 className="font-bold">Edit user</h3>
+      <label className="block my-2">
+        name: <input type="text" className="border p-1" defaultValue={props.user.name} />
+      </label>
+      <label className="block my-2">
+        email: <input type="email" className="border p-1" defaultValue={props.user.email} />
+      </label>
+      <label className="block my-2">
+        password: <input type="password" className="border p-1" />
+      </label>
+      <Button title="Update" onPress={props.onClose} />
+      <Button title="Cancel" className="bg-gray-500" onPress={props.onClose} />
+    </dialog>
+  );
+}
+
 export default function DinerDashboard(props: Props) {
   const user = props.user || ({} as User);
   const [orders, setOrders] = React.useState<Order[]>([]);
+  const [editing, setEditing] = React.useState(false);
 
   React.useEffect(() => {
     (async () => {
@@ -35,6 +69,8 @@ export default function DinerDashboard(props: Props) {
         <div className="hs-tooltip inline-block">
           <img className="hs-tooltip-toggle relative inline-block size-[96px] rounded-full ring-2 ring-white hover:z-10" src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=facearea&facepad=2&w=300&h=300&q=80" alt="Employee stock photo" />
         </div>
+        <Button title="Edit" className="block ml-0" onPress={() => setEditing(true)} />
+        {editing && <EditUser user={user} onClose={() => setEditing(false)} />}
 
         <div className="my-4 text-lg text-orange-200 text-start grid grid-cols-5 gap-2">
           <div className="font-semibold text-orange-400">name:</div> <div className="col-span-4">{user.name}</div>
